@@ -1,0 +1,37 @@
+var btns = document.querySelectorAll('button.sc-button-like');
+var interval = 500; // 500ms
+var retryInterval = 2000; // 2000ms
+var totalTracks = btns.length;
+var tracksLiked = 0;
+var errors = [];
+
+console.log(`Descurtindo ${totalTracks} faixas...`);
+
+function likeTrack(index) {
+  if (index >= totalTracks) {
+    console.log('All tracks unliked!');
+    console.log('Erros:');
+    errors.forEach(function(error) {
+      console.error(error);
+    });
+    return; // parar aqui
+  }
+  var button = btns[index];
+  if (button && button.offsetParent !== null) {
+    button.click();
+    tracksLiked++;
+    console.log(`Faixas descurtidas: ${tracksLiked} de ${totalTracks}`);
+  } else {
+    errors.push(`Erro ao descurtir faixa ${index + 1}`);
+    console.error(errors[errors.length - 1]);
+    setTimeout(function() {
+      likeTrack(index); // tentar novamente
+    }, retryInterval);
+    return; // não continuar para o próximo botão
+  }
+  setTimeout(function() {
+    likeTrack(index + 1);
+  }, interval);
+}
+
+likeTrack(0);
