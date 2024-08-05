@@ -1,0 +1,84 @@
+var btns = document.querySelectorAll('button.sc-button-repost');
+var interval = 2000; // 2 seconds
+var retryInterval = 2000;
+var totalTracks = btns.length;
+var tracksRemoved = 0;
+var errors = [];
+var completed = false;
+var maxRetries = 3;
+var partitionSize = 20; // process 20 tracks at a time
+
+console.log(`Removendo ${totalTracks} faixas...`);
+
+function pollForButton(index, retries = 0) {
+  var button = btns[index % btns.length];
+  if (button && button.offsetParent!== null) {
+    removeReposts(index);
+  } else {
+    if (retries < maxRetries) {
+      setTimeout(function() {
+        pollForButton(index, retries + 1);
+      }, retries === 0? interval : retryInterval);
+    } else {
+      errors.push(`Erro ao carregar botão ${index + 1}: Falha após ${retries} tentativas`);
+      console.error(errors[errors.length - 1]);
+      pollForButton(index + 1);
+    }
+  }
+}
+
+function removeReposts(index, retries = 0) {
+  if (completed) {
+    console.log('Execution completed. Stopping.');
+    return;
+  }
+  var l = btns[index % btns.length].getAttribute('aria-label');
+  if (l.includes('Excluir publicação')) {
+    btns[index % btns.length].click();
+    setTimeout(function() {
+      var deleteButton = document.querySelector('button.repostOverlay__formButtonDelete');
+      if (deleteButton) {
+        var clickEvent = new MouseEvent('click', {
+          view: window,
+          bubbles: true
+        });
+        deleteButton.dispatchEvent(clickEvent);
+        tracksRemoved++;
+        console.log(`Faixas removidas: ${tracksRemoved} de ${totalTracks}`);
+      } else {
+        if (retries < maxRetries) {
+          setTimeout(function() {
+            removeReposts(index, retries + 1);
+          }, retries === 0? interval : retryInterval); 
+        } else {
+          errors.push(`Erro ao remover faixa ${index + 1}: Falha após ${retries} tentativas`);
+          console.error(errors[errors.length - 1]);
+          pollForButton(index + 1); 
+        }
+      }
+      if (index >= totalTracks - 1) {
+        completed = true;
+        console.log('All tracks removed!');
+      } else {
+        // process next partition
+        if ((index + 1) % partitionSize === 0) {
+          setTimeout(function() {
+            pollForButton(index + 1);
+          }, interval);
+        } else {
+          pollForButton(index + 1);
+        }
+      }
+    }, interval);
+  } else if (l.includes('Editar republicação')) {
+    btns[index % btns.length].click();
+    pollForButton(index + 1);
+  }
+}
+
+pollForButton(0); 
+
+console.log('Erros:');
+errors.forEach(function(error) {
+  console.error(error);
+});
