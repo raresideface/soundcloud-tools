@@ -1,0 +1,58 @@
+var btns = document.querySelectorAll('button.sc-button-follow');
+var interval = 2000; // 2 seconds
+var retryInterval = 2000;
+var totalUsers = btns.length;
+var usersUnfollowed = 0;
+var errors = [];
+var completed = false;
+var maxRetries = 3;
+var partitionSize = 20; // process 20 users at a time
+
+console.log(`Desfazendo o follow de ${totalUsers} usuários...`);
+
+function pollForButton(index, retries = 0) {
+  var button = btns[index % btns.length];
+  if (button && button.offsetParent!== null) {
+    unfollowUser(index);
+  } else {
+    if (retries < maxRetries) {
+      setTimeout(function() {
+        pollForButton(index, retries + 1);
+      }, retries === 0? interval : retryInterval);
+    } else {
+      errors.push(`Erro ao carregar botão ${index + 1}: Falha após ${retries} tentativas`);
+      console.error(errors[errors.length - 1]);
+      pollForButton(index + 1);
+    }
+  }
+}
+
+function unfollowUser(index) {
+  if (completed) {
+    console.log('Execution completed. Stopping.');
+    return;
+  }
+  btns[index % btns.length].click();
+  usersUnfollowed++;
+  console.log(`Usuários desfollowed: ${usersUnfollowed} de ${totalUsers}`);
+  if (index >= totalUsers - 1) {
+    completed = true;
+    console.log('All users unfollowed!');
+  } else {
+    // process next partition
+    if ((index + 1) % partitionSize === 0) {
+      setTimeout(function() {
+        pollForButton(index + 1);
+      }, interval);
+    } else {
+      pollForButton(index + 1);
+    }
+  }
+}
+
+pollForButton(0); 
+
+console.log('Erros:');
+errors.forEach(function(error) {
+  console.error(error);
+});
