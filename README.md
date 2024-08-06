@@ -7,7 +7,4 @@ www.soundcloud.com/your-account/following or reposts or likes
 
 Just be careful to load the page, because scrolling down too fast with the script can trigger a captcha or get you blocked.
 
-
-
-
-is hardcoded to portugues language unfortunally ain't found a way to execute te whole code in any language... (sorry)
+the code is hardcoded to the portuguese language, unfortunately. i haven't found a way to execute the whole code in all languages. (sorry)
